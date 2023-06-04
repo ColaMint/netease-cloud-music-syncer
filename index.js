@@ -12,6 +12,21 @@ const {
   cloud,
 } = require("NeteaseCloudMusicApi");
 var qrcode = require("qrcode-terminal");
+const { ArgumentParser } = require("argparse");
+const { version } = require("./package.json");
+
+const parser = new ArgumentParser({
+  description: "Argparse example",
+});
+parser.add_argument("-v", "--version", { action: "version", version });
+parser.add_argument("-c", "--cookie-path", {
+  help: "path to cookie file",
+  default: "./cookie.txt",
+});
+parser.add_argument("-m", "--music-dir", {
+  help: "path to music directory",
+  default: "~/Music",
+});
 
 function getFileContent(filePath) {
   const name = path.basename(filePath);
@@ -20,15 +35,15 @@ function getFileContent(filePath) {
   return { name, data, mimeType };
 }
 
-const cookiePath = "./cookie.txt";
-const musicDir = "~/Music/";
-
 async function main() {
   try {
+    // 解析命令行参数
+    const args = parser.parse_args();
+
     // 读取保存的cookie
     let cookie = "";
-    if (fs.existsSync(cookiePath)) {
-      cookie = fs.readFileSync(cookiePath).toString();
+    if (fs.existsSync(args.cookie_path)) {
+      cookie = fs.readFileSync(args.cookie_path).toString();
     }
 
     // 检查保存的cookie是否有效
@@ -73,7 +88,7 @@ async function main() {
       console.log("登陆成功！");
 
       // 保存cookie
-      fs.writeFileSync(cookiePath, cookie);
+      fs.writeFileSync(args.cookie_path, cookie);
     }
 
     // 获取云盘的歌曲列表
@@ -97,7 +112,10 @@ async function main() {
 
     // 上传云盘中不存在的本地歌曲
     const mm = await import("music-metadata");
-    const pattern = path.join(expandHomeDir(musicDir), `/**/*.{mp3,flac}`);
+    const pattern = path.join(
+      expandHomeDir(args.music_dir),
+      `/**/*.{mp3,flac}`
+    );
     const files = glob.sync(pattern);
     const filesToUpload = {};
     for (let i = 0; i < files.length; ++i) {
