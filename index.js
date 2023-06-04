@@ -26,7 +26,10 @@ const musicDir = "~/Music/";
 async function main() {
   try {
     // 读取保存的cookie
-    let cookie = fs.readFileSync(cookiePath).toString();
+    let cookie = "";
+    if (fs.existsSync(cookiePath)) {
+      cookie = fs.readFileSync(cookiePath).toString();
+    }
 
     // 检查保存的cookie是否有效
     const loginStatusResult = await login_status({
