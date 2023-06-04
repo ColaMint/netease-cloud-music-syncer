@@ -23,7 +23,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show program's version number and exit
   -c COOKIE_PATH, --cookie-path COOKIE_PATH
-                        path to cookie file
+                        保存cookie的文件路径，默认为：./cookie.txt
   -m MUSIC_DIR, --music-dir MUSIC_DIR
-                        path to music directory
+                        音乐文件夹路径，默认为：~/Music
 ```
