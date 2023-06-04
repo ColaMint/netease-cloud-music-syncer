@@ -20,11 +20,11 @@ const parser = new ArgumentParser({
 });
 parser.add_argument("-v", "--version", { action: "version", version });
 parser.add_argument("-c", "--cookie-path", {
-  help: "path to cookie file",
+  help: "保存cookie的文件路径，默认为：./cookie.txt",
   default: "./cookie.txt",
 });
 parser.add_argument("-m", "--music-dir", {
-  help: "path to music directory",
+  help: "音乐文件夹路径，默认为：~/Music",
   default: "~/Music",
 });
 
