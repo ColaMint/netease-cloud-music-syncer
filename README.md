@@ -29,3 +29,7 @@ optional arguments:
   -m MUSIC_DIR, --music-dir MUSIC_DIR
                         音乐文件夹路径，默认为：~/Music
 ```
+
+## TODO
+
+- 自动将云盘中的音频文件下载到本地
