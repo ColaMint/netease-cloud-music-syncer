@@ -104,7 +104,9 @@ async function main() {
       const filePath = files[i];
       const songFile = getFileContent(filePath);
       const metadata = await mm.parseBuffer(songFile.data, songFile.mimetype);
-      const key = `${metadata.common.album}:${metadata.common.artist}:${metadata.common.title}`;
+      const key = `${
+        metadata.common.album ? metadata.common.album : "未知专辑"
+      }:${metadata.common.artist}:${metadata.common.title}`;
       if (!cloudSongs.has(key)) {
         filesToUpload[filePath] = songFile;
       }
