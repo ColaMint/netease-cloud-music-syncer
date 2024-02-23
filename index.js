@@ -62,7 +62,8 @@ function getFileContent(filePath) {
   const name = path.basename(filePath);
   const data = fs.readFileSync(filePath);
   const mimeType = mime.getType(filePath);
-  return { name, data, mimeType };
+  const birthtime = fs.statSync(filePath).birthtime;
+  return { name, data, mimeType, birthtime };
 }
 
 async function main() {
@@ -154,7 +155,7 @@ async function main() {
       `/**/*.{mp3,flac,ogg,acc}`
     );
     const files = glob.sync(pattern);
-    const filesToUpload = {};
+    const filesToUpload = [];
     for (let i = 0; i < files.length; ++i) {
       const filePath = files[i];
       const fileName =
@@ -162,6 +163,9 @@ async function main() {
         path.extname(filePath).replace(".", "_");
       const songFile = getFileContent(filePath);
       const metadata = await mm.parseBuffer(songFile.data, songFile.mimetype);
+      metadata.common.artist = metadata.common.artist
+        ? metadata.common.artist.trim()
+        : "";
       const key = `${
         metadata.common.album ? metadata.common.album : "未知专辑"
       }:${metadata.common.artist}:${metadata.common.title}`;
@@ -170,14 +174,28 @@ async function main() {
         !cloudSongs.has(fileName) &&
         !cloudSongs.has(metadata.common.title)
       ) {
-        filesToUpload[filePath] = songFile;
+        filesToUpload.push({
+          filePath: filePath,
+          songFile: songFile,
+          metadata: metadata,
+        });
       }
     }
 
+    filesToUpload.sort((a, b) => {
+      if (a.metadata.common.artist == b.metadata.common.artist) {
+        return a.songFile.birthtime < b.songFile.birthtime ? -1 : 1;
+      } else {
+        return a.metadata.common.artist < b.metadata.common.artist ? -1 : 1;
+      }
+    });
+
     let finished = 0;
     let total = Object.keys(filesToUpload).length;
-    for (let filePath in filesToUpload) {
-      const songFile = filesToUpload[filePath];
+    for (let i in filesToUpload) {
+      const file = filesToUpload[i];
+      const filePath = file.filePath;
+      const songFile = file.songFile;
       for (let t = 0; t < 3; ++t) {
         try {
           await cloud({
