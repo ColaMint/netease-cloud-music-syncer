@@ -25,8 +25,38 @@ parser.add_argument("-c", "--cookie-path", {
 });
 parser.add_argument("-m", "--music-dir", {
   help: "音乐文件夹路径，默认为：~/Music",
-  default: "~/Music",
+  default:
+    "/Users/liming/Library/Application Support/com.netease.mumu.nemux/MuMuPlayerProShared.localized/KuwoMusic/music/",
 });
+
+function renameFiles(dir) {
+  fs.readdir(dir, (err, files) => {
+    if (err) {
+      console.error("读取歌曲目录失败:", err);
+      return;
+    }
+
+    files.forEach((file) => {
+      const oldFilePath = path.join(dir, file);
+      const fileParts = file.split(".");
+      const extension = fileParts.pop();
+      const fileName = fileParts.join(".");
+      const newFileName = fileName.replace(/-\d+/g, "") + "." + extension;
+
+      const newFilePath = path.join(dir, newFileName);
+
+      if (oldFilePath !== newFilePath) {
+        fs.rename(oldFilePath, newFilePath, (err) => {
+          if (err) {
+            console.error(`重命名文件失败 ${file}:`, err);
+          } else {
+            console.log(`${file} 重命名为 ${newFileName}`);
+          }
+        });
+      }
+    });
+  });
+}
 
 function getFileContent(filePath) {
   const name = path.basename(filePath);
@@ -91,6 +121,9 @@ async function main() {
       fs.writeFileSync(args.cookie_path, cookie);
     }
 
+    // 重命名本地歌曲文件
+    renameFiles(args.music_dir);
+
     // 获取云盘的歌曲列表
     let hasMore = true;
     const limit = 200;
@@ -106,7 +139,11 @@ async function main() {
       offset += limit;
 
       result.body.data.forEach(function (song) {
-        cloudSongs.add(`${song.album}:${song.artist}:${song.songName}`);
+        if (song.album == "未知专辑") {
+          cloudSongs.add(song.songName);
+        } else {
+          cloudSongs.add(`${song.album}:${song.artist}:${song.songName}`);
+        }
       });
     }
 
@@ -114,18 +151,25 @@ async function main() {
     const mm = await import("music-metadata");
     const pattern = path.join(
       expandHomeDir(args.music_dir),
-      `/**/*.{mp3,flac}`
+      `/**/*.{mp3,flac,ogg,acc}`
     );
     const files = glob.sync(pattern);
     const filesToUpload = {};
     for (let i = 0; i < files.length; ++i) {
       const filePath = files[i];
+      const fileName =
+        path.basename(filePath, path.extname(filePath)) +
+        path.extname(filePath).replace(".", "_");
       const songFile = getFileContent(filePath);
       const metadata = await mm.parseBuffer(songFile.data, songFile.mimetype);
       const key = `${
         metadata.common.album ? metadata.common.album : "未知专辑"
       }:${metadata.common.artist}:${metadata.common.title}`;
-      if (!cloudSongs.has(key)) {
+      if (
+        !cloudSongs.has(key) &&
+        !cloudSongs.has(fileName) &&
+        !cloudSongs.has(metadata.common.title)
+      ) {
         filesToUpload[filePath] = songFile;
       }
     }
