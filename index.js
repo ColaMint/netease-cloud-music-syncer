@@ -26,7 +26,7 @@ parser.add_argument("-c", "--cookie-path", {
 parser.add_argument("-m", "--music-dir", {
   help: "音乐文件夹路径，默认为：~/Music",
   default:
-    "/Users/liming/Library/Application Support/com.netease.mumu.nemux/MuMuPlayerProShared.localized/KuwoMusic/music/",
+    "/Users/liming/Library/Application Support/com.netease.mumu.nemux-global/MuMuPlayerProShared.localized/Download/KuwoMusic/music",
 });
 
 function renameFiles(dir) {
